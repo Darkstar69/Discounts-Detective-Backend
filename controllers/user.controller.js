@@ -23,12 +23,12 @@ const signup = asyncHandler(async(req, res, next) => {
             password
         })
 
+
         if(!user)
             return next(new ErrorHandler("User Not Created", 500));
 
         return sendToken(res, user, 200, `Welcome ${name}`);
 
-    
     } catch (error) {
         console.log('User Not Created: ', error);
         return next(new ErrorHandler("User Not Created", 500))
