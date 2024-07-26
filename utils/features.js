@@ -13,7 +13,7 @@ const cookieOptions = {
 
 const connectDB = async (uri) => {
     try {
-        const db = await mongoose.connect(uri, {dbName: "discount"});
+        const db = await mongoose.connect(uri, {dbName: "DDdatabase"});
         console.log("DataBase Connected")
     } catch (error) {
         console.log("Data Base Connection error in feature js: ", error)
@@ -24,7 +24,7 @@ const connectDB = async (uri) => {
 const sendToken = (res, user, code, message) => {
     const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET);
 
-    return res.status(code).cookie("discountToken", token, cookieOptions).json({
+    return res.status(code).cookie("DdToken", token, cookieOptions).json({
         success: true,
         message,
         user

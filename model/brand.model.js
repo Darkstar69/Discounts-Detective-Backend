@@ -2,13 +2,14 @@ import mongoose from 'mongoose';
 
 const brandSchema = new mongoose.Schema({
     name: {
-        type: String, 
+        type: String,
         required: true,
         unique: true
     },
-    icon: {
-        type: String
+    url: {
+        type: String,
+        required: true
     }
-}, {timestamps: true});
+}, { timestamps: true });
 
-export const Brand = mongoose.model('Brand', brandSchema);
+export const Brand = mongoose.model('Brands', brandSchema);
