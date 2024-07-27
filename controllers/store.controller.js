@@ -41,6 +41,11 @@ export const storeDetailsAdd = asyncHandler(async (req, res, next) => {
 export const getAllStores = asyncHandler(async (req, res, next) => {
     try {
         const allStores = await Brand.find();
+
+        if (!allStores) {
+            return next(ErrorHandler("Not Stores Found", 500))
+        }
+
         return res.status(200).json({
             success: true,
             allStores
@@ -49,6 +54,56 @@ export const getAllStores = asyncHandler(async (req, res, next) => {
         return new Error(error)
     }
 })
+
+export const updateStore = asyncHandler(async (req, res, next) => {
+    try {
+        const _id = req.query._id;
+        const { name, url } = req.body;
+
+        const updatedStore = Brand.findOneAndUpdate(
+            { _id },
+            {
+                $set: {
+                    name,
+                    url
+                }
+            },
+            { new: true }
+        );
+
+        if (!updatedStore) {
+            return next(ErrorHandler("Store Not Updated", 500));
+        }
+        return res.status(200).json({
+            success: true,
+            updatedStore
+        })
+
+    } catch (error) {
+        return new Error(error)
+    }
+})
+
+export const deleteStore = asyncHandler(async (req, res, next) => {
+    try {
+        const _id = req.query._id;
+
+        const storeDeleted = Brand.findOneAndDelete({ _id });
+
+        if (!storeDeleted) {
+            return next(ErrorHandler("Store Not Updated", 500));
+        }
+        return res.status(200).json({
+            success: true,
+            storeDeleted
+        })
+
+    } catch (error) {
+        return new Error(error)
+    }
+})
+
+
 
 export const couponsAdd = asyncHandler(async (req, res, next) => {
     try {
