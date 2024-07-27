@@ -1,17 +1,18 @@
 import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema({
-    name: {
+    title: {
         type: String,
         required: true
     },
 
     thumbnail: {
         type: String,
+        required: true
     },
 
     discount: {
-        type: String,
+        type: Number,
         required: true
     },
 
@@ -44,4 +45,4 @@ const productSchema = new mongoose.Schema({
     }
 }, {timestamps: true})
 
-export const ProductDetails = mongoose.model("ProductDetails", productSchema)
+export const ProductDetails = mongoose.model("CouponDetails", productSchema)
