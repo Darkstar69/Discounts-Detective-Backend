@@ -21,13 +21,13 @@ const productSchema = new mongoose.Schema({
         required: true
     },
 
-    platformIcon:{
+    platformIcon: {
         type: String
     },
 
-    description: [
-        {type: String}
-    ],
+    description: {
+        type: String
+    },
 
     price: {
         type: Number,
@@ -43,6 +43,6 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true
     }
-}, {timestamps: true})
+}, { timestamps: true })
 
 export const ProductDetails = mongoose.model("CouponDetails", productSchema)
