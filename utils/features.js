@@ -1,8 +1,24 @@
-import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import { getBase64 } from '../lib/helper.js';
 import { v4 as uuid } from "uuid";
 import { v2 as cloudinary } from "cloudinary";
+import mysql from "mysql";
+import dotenv from 'dotenv'
+import mysql2 from 'mysql2/promise';
+
+dotenv.config();
+
+const pool = mysql2.createPool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
+
 
 const cookieOptions = {
     maxAge: 15 * 24 * 60 * 60 * 1000,
@@ -11,18 +27,19 @@ const cookieOptions = {
     secure: true
 }
 
-const connectDB = async (uri) => {
-    try {
-        const db = await mongoose.connect(uri, {dbName: "DDdatabase"});
-        console.log("DataBase Connected")
-    } catch (error) {
-        console.log("Data Base Connection error in feature js: ", error)
-        throw new error()
-    }
-}
+const connectDB = mysql.createConnection({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    keepAliveInitialDelay: 10000,
+    enableKeepAlive: true,
+})
+
 
 const sendToken = (res, user, code, message) => {
-    const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET);
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
 
     return res.status(code).cookie("DdToken", token, cookieOptions).json({
         success: true,
@@ -31,19 +48,19 @@ const sendToken = (res, user, code, message) => {
     })
 }
 
-const uploadFilesToCloudinary = async (files=[]) => {
+const uploadFilesToCloudinary = async (files = []) => {
     const uploadPromises = files.map((file) => {
         return new Promise((resolve, reject) => {
-           cloudinary.uploader.upload(getBase64(file), {
-            resource_type: "auto",
-            public_id: uuid()
-           },
+            cloudinary.uploader.upload(getBase64(file), {
+                resource_type: "auto",
+                public_id: uuid()
+            },
 
-           (error, result) => {
-            if(error) return reject(error);
-            resolve(result)
-           }
-        ) 
+                (error, result) => {
+                    if (error) return reject(error);
+                    resolve(result)
+                }
+            )
         })
     })
 
@@ -62,6 +79,7 @@ const uploadFilesToCloudinary = async (files=[]) => {
 }
 
 export {
+    pool,
     connectDB,
     sendToken,
     uploadFilesToCloudinary

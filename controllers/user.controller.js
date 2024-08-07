@@ -1,66 +1,73 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import { ErrorHandler } from "../utils/errorHandler.js";
-import { User } from "../model/user.model.js";
 import bcrypt from 'bcrypt';
-import { sendToken } from '../utils/features.js'
+import { pool, sendToken } from '../utils/features.js';
 
-const signup = asyncHandler(async (req, res, next) => {
+
+export const signup = asyncHandler(async (req, res, next) => {
     try {
         const { name, phone, email, password } = req.body;
+        const encodedPass = await bcrypt.hash(password, 10);
 
-        if (!(name && phone && email && password))
-            return next(new ErrorHandler("Please Provide Field", 400))
+        if (!(name && phone && email && password)) {
+            return next(new ErrorHandler("Please Provide All Fields", 400));
+        }
 
-        const isUser = await User.findOne({ phone });
+        // Check if the user already exists
+        const [isUser] = await pool.query('SELECT * FROM users WHERE phone = ?', [phone]);
 
-        if (isUser)
-            return next(new ErrorHandler("User Allready Exist", 404));
+        if (isUser.length > 0) {
+            return next(new ErrorHandler("User Already Exists", 404));
+        }
 
-        const user = await User.create({
-            name,
-            phone,
-            email,
-            password
-        })
+        // Insert the new user
+        const [result] = await pool.query(
+            'INSERT INTO users (name, phone, email, password) VALUES (?, ?, ?, ?)',
+            [name, phone, email, encodedPass]
+        );
 
-
-        if (!user)
+        if (result.affectedRows === 0) {
             return next(new ErrorHandler("User Not Created", 500));
+        }
 
-        return sendToken(res, user, 200, `Welcome ${name}`);
+        // Fetch the newly created user
+        const [user] = await pool.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
+
+        return sendToken(res, user[0], 200, `Welcome ${name}`);
 
     } catch (error) {
         console.log('User Not Created: ', error);
-        return next(new ErrorHandler("User Not Created", 500))
+        return next(new ErrorHandler("User Not Created", 500));
     }
-})
+});
 
-const login = asyncHandler(async (req, res, next) => {
+
+export const login = asyncHandler(async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
-        if (!(email && password))
-            return next(new ErrorHandler("Please Provide Field"));
+        if (!(email && password)) {
+            return next(new ErrorHandler("Please Provide All Fields", 400));
+        }
 
-        const user = await User.findOne({ email }).select("+password");
+        // Fetch the user by email
+        const [user] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
 
-        if (!user)
+        if (user.length === 0) {
             return next(new ErrorHandler("User Not Found", 404));
+        }
 
-        const isPassMatch = await bcrypt.compare(password, user.password)
+        // Compare the password
+        const isPassMatch = await bcrypt.compare(password, user[0].password);
 
-        if (!isPassMatch)
-            return next(new ErrorHandler('Invalid Password', 400))
+        if (!isPassMatch) {
+            return next(new ErrorHandler('Invalid Password', 400));
+        }
 
-        return sendToken(res, user, 200, `Welcome Back ${user.name}`)
+        return sendToken(res, user[0], 200, `Welcome Back ${user[0].name}`);
 
     } catch (error) {
-        console.log(`Login Failed: `, error)
-        throw new ErrorHandler("Login Failed", 500)
+        console.log('Login Failed: ', error);
+        return next(new ErrorHandler("Login Failed", 500));
     }
-})
-
-export {
-    signup,
-    login
-}
+});

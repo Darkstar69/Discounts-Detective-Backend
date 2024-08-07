@@ -15,7 +15,11 @@ const PORT = process.env.PORT || 5000
 
 const app = express();
 
-connectDB(process.env.MONGODB_URI);
+connectDB.connect((err) => {
+    if (err) console.log(err.message);
+    else console.log("Connected to Database ");
+    app.listen(PORT, () => console.log(`Server is running at PORT ${PORT}`));
+});
 
 app.use(cookieParser());
 
@@ -28,4 +32,3 @@ app.use(errorMiddleware)
 app.use('/api/v1/user', userRoute);
 app.use('/api/v2/admin', adminRoute);
 
-app.listen(PORT, () => console.log(`Server is running at PORT ${PORT}`));
